@@ -1,10 +1,4 @@
-import heapq
 import copy
-
-# Last check
-# make it OPEN as queue of tupe (fval, State)
-# Do not use heapq -> just use queue and sort it every time with lambda function
-# check prev pointer logic
 
 '''
 empty block -> 0
@@ -26,8 +20,9 @@ class State:
 class Puzzle:
     def __init__(self, goal):
         self.goal = goal
-        # a priority queue sorted by state.fval
+        # a list of states we explored(seen)
         self.seen = []
+        # a priority queue sorted by state.fval
         self.open = []
         self.closed = []
 
@@ -44,16 +39,14 @@ class Puzzle:
         for dx, dy in delta:
             nx = x + dx
             ny = y + dy
-            # out of the boundary
-            if nx < 0 or ny < 0 or nx >= 5 or ny >= 5:
-                continue
-            # cannot swap with blackhole blocks
-            if state[nx][ny] == -1:
+            # out of the boundary case or blackhole
+            if nx < 0 or ny < 0 or nx >= 5 or ny >= 5 or state[nx][ny] == -1:
                 continue
             succs = copy.deepcopy(state)
             succs[x][y], succs[nx][ny] = succs[nx][ny], succs[x][y]
             # Append it as State instance
             successors.append(State(succs, hval + curr.gval + 1, curr.gval + 1, curr))
+
             if succs not in self.seen:
                 self.seen.append(succs)
         return successors
@@ -89,6 +82,7 @@ class Puzzle:
     def findPath(self, goal):
         print("Total steps to find a solution is ", goal.gval)
         print("The number of states we saw", len(self.closed))
+        print("We saw total states", len(self.seen) + len(self.open))
         path = [goal.state]
         curr = goal
         prev = curr.prev
@@ -120,28 +114,24 @@ class Puzzle:
                 self.seen.append(curr.state)
 
             if curr.state == self.goal:
-                # We find the goal state
-                # find a path using prev pointer
-                print("We saw", len(self.seen) + len(self.open))
                 return self.findPath(curr)
+
             # find all the next available states
             successors = self.findAllNext(curr)
             for succs in successors:
                 seen = self.checkOpen(succs) or self.checkClose(succs)
                 if not seen:
                     self.open.append(succs)
-
                 else:
                     if curr.gval < seen.gval:
+                        # update gval in OPEN -> fval will be updated
                         if self.checkOpen(succs):
                             seen.gval = curr.gval
-                            # update gval in OPEN -> fval will be updated
                         else:
                             # remove the succs from close and place it to open with a new g value
                             self.closed.remove(seen)
                             self.open.append(succs)
             self.open.sort(key= lambda x: x.fval)
-
         print("Search ended with no solution found!")
 
 initialState = [
