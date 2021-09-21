@@ -1,56 +1,21 @@
-import random
 import numpy as np
+import random
 
-'''
-N Queen puzzle solver using Hill Climbing Search Algorithm
-
-for i in range(k)
-    1. Pick initial state s
-    2. Pick t in neighbors(s) with lowest f(t)
-    3. IF f(t) >= f(s) THEN STOP, return s
-    4. s = t. GOTO 2
-'''
 class State:
     def __init__(self, state, fval, path):
         self.state = state
         self.fval = fval
         self.path = path
 
-class HCSolver:
-    def solvePuzzle(self):
-        initial = self.initialize()
-        curr = initial
-        while True:
-            # curr.moves.append(curr)
-            sBoard = self.calculateScore(curr.state)
-            sBoard = np.array(sBoard)
+class RandomStartSolver():
+    def __init__(self, k):
+        # number of random restarts
+        self.k = k
+        self.minState = State(None, float('inf'), [])
+        # self.minFval = float('inf')
+        # self.minState = []
+        self.movecnt= []
 
-            # find the lowest score value
-            minimum = min([min(r) for r in sBoard])
-            (coordX, coordY) = np.where(sBoard == minimum)
-
-            # if there are multiple lowest values, randomly pick one
-            r = random.randrange(len(coordX))
-            # pick a successor
-            (sx, sy) = (coordX[r], coordY[r])
-
-            # curr is the local optima
-            if sBoard[sx][sy] >= curr.fval:
-                return curr
-
-            state = curr.state
-            for i in range(len(curr.state)):
-                if state[i][sy] == 'Q':
-                    (nr, ny) = (i, sy)
-                    break
-
-            # move a queen
-            state[sx][sy], state[nr][ny] = state[nr][ny], state[sx][sy]
-            # curr = neighbor
-            curr = State(state, sBoard[sx][sy], curr.path + [curr])
-
-    # randomly distribute queens on a 25*25 board
-    # place a queen each column
     def initialize(self):
         board = [[0] * 25 for _ in range(25)]
         for col in range(25):
@@ -67,9 +32,6 @@ class HCSolver:
 
         return State(board, total // 2, [])
 
-    # calculate the number of pairs of queens that are attacking each other if move a queen to (nr, nc)
-    # check how many queens on the same row
-    # check how many queens on the diagonal
     def calculateFval(self, board, nr, nc):
         # find the location of queen
         for r in range(len(board)):
@@ -89,7 +51,6 @@ class HCSolver:
         board[nr][nc], board[qr][qc] = board[qr][qc], board[nr][nc]
         return total // 2
 
-    # calculate the number of conflicts with block (row, col)
     def calculateConflicts(self, board, row, col):
         cnt = 0
         # check rows
@@ -128,20 +89,57 @@ class HCSolver:
                     sBoard[r][c] = self.calculateFval(s, r, c)
         return sBoard
 
+    def solvePuzzle(self):
+        for i in range(self.k):
+            initial = self.initialize()
+            curr = initial
+            while True:
+                sBoard = self.calculateScore(curr.state)
+                sBoard = np.array(sBoard)
+
+                # find the lowest score value
+                minimum = min([min(r) for r in sBoard])
+                (coordX, coordY) = np.where(sBoard == minimum)
+
+                # if there are multiple lowest values, randomly pick one
+                r = random.randrange(len(coordX))
+                # pick a successor
+                (sx, sy) = (coordX[r], coordY[r])
+
+                # curr is the local optima
+                if sBoard[sx][sy] >= curr.fval:
+                    self.movecnt.append(len(curr.path)+ 1)
+                    if self.minState.fval > curr.fval:
+                        # self.minState = curr.state
+                        self.minState = State(curr.state, curr.fval, curr.path + [curr])
+                    # else - just don't update the minState
+                    break
+
+                state = curr.state
+                for i in range(len(curr.state)):
+                    if state[i][sy] == 'Q':
+                        (nr, ny) = (i, sy)
+                        break
+
+                # move a queen
+                state[sx][sy], state[nr][ny] = state[nr][ny], state[sx][sy]
+                # curr = neighbor
+                curr = State(state, sBoard[sx][sy], curr.path + [curr])
+
+        return self.minState
+
     # print a path of solution
-    def processSolution(self, sol):
+    def processSol(self, sol):
         for m in sol.path:
             print('Fval', m.fval)
             for row in m.state:
                 print(row)
             print('------------------------------------------------------------------------')
+        print(self.movecnt)
+        print("Average the number of moves took - ", sum(self.movecnt) / len(self.movecnt))
         print("Process completed, the number of states visited - ", len(sol.path))
 
-solver = HCSolver()
-solution = solver.solvePuzzle()
-solver.processSolution(solution)
 
-        
-    
-        
-
+randomSolver = RandomStartSolver(10)
+solution = randomSolver.solvePuzzle()
+randomSolver.processSol(solution)
