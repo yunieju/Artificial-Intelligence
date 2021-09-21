@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import copy
 
 class State:
     def __init__(self, state, fval, path):
@@ -90,8 +91,24 @@ class RandomStartSolver():
         return sBoard
 
     def solvePuzzle(self):
+        # use the given initial state for the first iteration and
+        # randomly initialize initial state for next iterations
         for i in range(self.k):
-            initial = self.initialize()
+            if i == 0:
+                board = [[0] * 25 for _ in range(25)]
+                # put queens
+                for i in range(25):
+                    board[i][i] = 'Q'
+                total = 0
+                for c in range(len(board[0])):
+                    for r in range(len(board)):
+                        if board[r][c] == 'Q':
+                            total += self.calculateConflicts(board, r, c)
+                            continue
+
+                initial = State(board, total // 2, [])
+            else:
+                initial = self.initialize()
             curr = initial
             while True:
                 sBoard = self.calculateScore(curr.state)
@@ -108,14 +125,14 @@ class RandomStartSolver():
 
                 # curr is the local optima
                 if sBoard[sx][sy] >= curr.fval:
-                    self.movecnt.append(len(curr.path)+ 1)
+                    self.movecnt.append(len(curr.path))
                     if self.minState.fval > curr.fval:
                         # self.minState = curr.state
                         self.minState = State(curr.state, curr.fval, curr.path + [curr])
                     # else - just don't update the minState
                     break
 
-                state = curr.state
+                state = copy.deepcopy(curr.state)
                 for i in range(len(curr.state)):
                     if state[i][sy] == 'Q':
                         (nr, ny) = (i, sy)

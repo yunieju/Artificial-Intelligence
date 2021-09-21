@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import copy
 
 '''
 N Queen puzzle solver using Hill Climbing Search Algorithm
@@ -14,6 +15,7 @@ class State:
     def __init__(self, state, fval, path):
         self.state = state
         self.fval = fval
+        # previous states visited
         self.path = path
 
 class HCSolver:
@@ -38,33 +40,29 @@ class HCSolver:
             if sBoard[sx][sy] >= curr.fval:
                 return curr
 
-            state = curr.state
+            state = copy.deepcopy(curr.state)
             for i in range(len(curr.state)):
                 if state[i][sy] == 'Q':
                     (nr, ny) = (i, sy)
                     break
 
             # move a queen
+            print('Move queen ', (sx, sy), 'to', (nr, ny))
             state[sx][sy], state[nr][ny] = state[nr][ny], state[sx][sy]
             # curr = neighbor
             curr = State(state, sBoard[sx][sy], curr.path + [curr])
 
-    # randomly distribute queens on a 25*25 board
-    # place a queen each column
     def initialize(self):
         board = [[0] * 25 for _ in range(25)]
-        for col in range(25):
-            r = random.randint(0, 24)
-            # put a queen
-            board[r][col] = 'Q'
-
+        # put queens
+        for i in range(25):
+            board[i][i] = 'Q'
         total = 0
         for c in range(len(board[0])):
             for r in range(len(board)):
                 if board[r][c] == 'Q':
                     total += self.calculateConflicts(board, r, c)
                     continue
-
         return State(board, total // 2, [])
 
     # calculate the number of pairs of queens that are attacking each other if move a queen to (nr, nc)
@@ -86,6 +84,7 @@ class HCSolver:
                     total += self.calculateConflicts(board, r, c)
                     continue
 
+        # move queen back
         board[nr][nc], board[qr][qc] = board[qr][qc], board[nr][nc]
         return total // 2
 
@@ -139,6 +138,7 @@ class HCSolver:
 
 solver = HCSolver()
 solution = solver.solvePuzzle()
+print(solution)
 solver.processSolution(solution)
 
         
