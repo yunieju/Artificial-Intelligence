@@ -3,8 +3,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-# use single link
+# use average link
 dataset = []
+map = dict()
 def readFile(path):
     # read data from a given txt file
     with open(path) as file:
@@ -12,10 +13,12 @@ def readFile(path):
         lines = [line.split() for line in lines]
         for line in lines:
             dataset.append([(float(line[0]), float(line[1]))])
+    print(len(dataset))
     return dataset
 
 
 def compute_distance(data):
+    # matrix = [[10000 for i in range(len(data))] for j in range(len(data))]
     matrix = np.zeros((len(data), len(data)))
     for i in range(len(matrix)):
         for j in range(len(matrix)):
@@ -25,25 +28,23 @@ def compute_distance(data):
                 matrix[i][j] = 1000000
     return matrix
 
-
 # calculate Euclidean distance
 def calculateDistance(A, B):
-    minimum = 10000
-    for (ax, ay) in A:
-        for (bx, by) in B:
-            dist = pow(ax - bx, 2) + pow(ay - by, 2)
-            dist = math.sqrt(dist)
-            minimum = min(minimum, dist)
+    
+    A_avgX = sum([x for (x,y) in A]) / len(A)
+    A_avgY = sum([y for (x,y) in A]) / len(A)
+    B_avgX = sum([x for (x,y) in B]) / len(B)
+    B_avgY = sum([y for (x,y) in B]) / len(B)
 
-    return minimum
-
+    dist = pow(A_avgX - B_avgX, 2) + pow(A_avgY - B_avgY, 2)
+    dist = math.sqrt(dist)
+    return dist
 
 def findMinimumIndex(minimum, m):
     for i in range(len(m)):
         for j in range(len(m)):
             if m[i][j] == minimum:
                 return (i, j)
-
 
 def drawGraph(data):
     cluster1 = data[0]
@@ -80,6 +81,7 @@ def process():
 
 
 d = process()
+
 print(d)
 drawGraph(d)
 print(len(d[0]) + len(d[1]))
